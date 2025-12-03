@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+  matsunoya-db:
+    image: postgres:16
+    container_name: matsunoya-db
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Tokyo
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: matsunoya_sector_rotation
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - matsunoya_pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - matsunoya-net
+
+  matsunoya-batch:
+    build: ./batch
+    container_name: matsunoya-batch
+    restart: unless-stopped
+    depends_on:
+      - matsunoya-db
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Tokyo
+      DB_HOST: matsunoya-db
+    volumes:
+      - ./batch:/batch
+    working_dir: /batch
+    networks:
+      - matsunoya-net
+    ports:
+      - "8000:8000"   # FastAPI (Airflow から http://matsunoya-batch:8000 経由で叩く)
+
+  matsunoya-airflow:
+    image: apache/airflow:2.9.0
+    container_name: matsunoya-airflow
+    restart: unless-stopped
+    depends_on:
+      - matsunoya-db
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Tokyo
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "false"
+      AIRFLOW__WEBSERVER__RBAC: "True"
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: Asia/Tokyo
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@matsunoya-db:5432/matsunoya_sector_rotation
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags:ro
+      - ./airflow/logs:/opt/airflow/logs
+    networks:
+      - matsunoya-net
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "
+      airflow db init &&
+      airflow users create --username ${AIRFLOW_ADMIN_USER} --password ${AIRFLOW_ADMIN_PASSWORD} --firstname admin --lastname matsunoya --role Admin --email ${AIRFLOW_ADMIN_EMAIL} || true &&
+      airflow webserver & airflow scheduler
+      "
+
+volumes:
+  matsunoya_pgdata:
+
+networks:
+  matsunoya-net:
+    driver: bridge
+

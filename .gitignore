@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+.Icon?
+._*
+
+# macOS メタデータ（外部ディスク等）
+ehthumbs.db
+Thumbs.db
+
+# VSCode など
+.vscode/
+
+# Python / venv
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.sqlite3
+.venv/
+venv/
+
+# プロジェクト固有
+.env
+.env.*
+airflow/logs/
+matsunoya_pgdata/
