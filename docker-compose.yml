@@ -35,6 +35,7 @@ services:
       - matsunoya-net
     ports:
       - "8000:8000"   # FastAPI (Airflow から http://matsunoya-batch:8000 経由で叩く)
+      - "8888:8888"
 
   matsunoya-airflow:
     image: apache/airflow:2.9.0

@@ -29,3 +29,7 @@ venv/
 .env.*
 airflow/logs/
 matsunoya_pgdata/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb

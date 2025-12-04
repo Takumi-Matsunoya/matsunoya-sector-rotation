@@ -22,4 +22,19 @@ with DAG(
         endpoint="/jobs/fetch_prices",
         method="POST",
     )
-    # 他のタスクはあとでHTTPエンドポイント増やしてから繋ぐ
+
+    update_factors = SimpleHttpOperator(
+        task_id="update_factors",
+        http_conn_id="matsunoya_batch",
+        endpoint="/jobs/update_factors",
+        method="POST",
+    )
+
+    compute_regimes_task = SimpleHttpOperator(
+        task_id="compute_regimes",
+        http_conn_id="matsunoya_batch",
+        endpoint="/jobs/compute_regimes",
+        method="POST",
+    )
+
+    fetch_prices >> update_factors >> compute_regimes_task

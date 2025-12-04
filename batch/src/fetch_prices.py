@@ -7,7 +7,6 @@ from sqlalchemy import text
 from src.db import engine
 
 
-
 US_SYMBOLS = [
     "XLK",
     "XLY",
@@ -22,6 +21,7 @@ US_SYMBOLS = [
     "^GSPC",
 ]
 
+
 def fetch_and_store(symbol: str, start: dt.date, end: dt.date) -> None:
     print(f"Fetching {symbol} ...")
     df = yf.download(symbol, start=start, end=end)
@@ -31,7 +31,7 @@ def fetch_and_store(symbol: str, start: dt.date, end: dt.date) -> None:
 
     df = df.reset_index()
     df["symbol"] = symbol
-    
+
     # 列名を小文字に統一（MultiIndex 対応）
     new_cols = []
     for c in df.columns:
@@ -41,7 +41,7 @@ def fetch_and_store(symbol: str, start: dt.date, end: dt.date) -> None:
         else:
             name = c
         new_cols.append(str(name).lower())
-    
+
     df.columns = new_cols  # date, open, high, low, close, volume, symbol 想定
 
     with engine.begin() as conn:
